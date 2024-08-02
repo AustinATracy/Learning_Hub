@@ -1,0 +1,8 @@
+,Question,Correct Associations,Incorrect Associations,Last Correct Answer Date,Streak,Priority,Other Question Padding,Overall Score
+0,What is the value of the html color taking the label of green?,"['rgb(0,127,0)']","['rgb(0,255,0)']",07/31/24,8,10,16,15
+1,What is the documentation declaration at the beginning of an HTML document?,['<!DOCTYPE html>'],[],07/31/24,7,10,17,13
+2,How do you represent the set difference of A and B?,['A\\B'],[],08/01/24,3,10,1,6
+3,How do you represent the symmetric difference of A and B?,['(A\\B) U (B\\A)'],[],08/01/24,-1,10,0,2
+4,How do you represent the symmetric difference of A and B with a symbol?,['Plus sign in a circle'],[],08/01/24,2,10,4,3
+5,How do you represent the set difference of A and B?,['A\\B'],[],08/01/24,2,10,3,0
+6,How do you represent the symmetric difference of A and B?,['(A\\B) U (B\\A)'],[],08/01/24,2,10,2,3
