@@ -1,6 +1,7 @@
 from datetime import datetime
 import pygame
 import random
+from re import sub
 import sys
 import winsound
 
@@ -43,55 +44,62 @@ def get_letters(df_letters):
     max_priority = df_letters_condensed["Priority"].max()
     df_letters_condensed = df_letters_condensed.loc[df_letters_condensed["Priority"] == max_priority]
     correct_answer_index = random.choice(df_letters_condensed.index)
-    correct_answers = [df_letters_condensed.loc[correct_answer_index]["Correct Answer"]]
+    correct_answer = df_letters_condensed.loc[correct_answer_index]["Correct Answer"]
     df_letters.drop("Total Priority",axis=1)
-    return letters, correct_answers
+    return letters, correct_answer
 
 def set_up_a_round(df_letters):
-        letters, correct_letters = get_letters(df_letters)
-        if correct_letters[0] == "c":
+        letters, correct_letter = get_letters(df_letters)
+        disallowed_letters = []
+        if correct_letter == "c":
             if random.random() > 0:
                 audio_letter = "k"
-                correct_letters = random.choice([["c(a)","k","q"],["c(o)","k","q"],["c(u)","k","q"]])
+                correct_letter_rep = random.choices(["c(a)","c(o)","c(u)","c(k)","c"],[1,1,1,5,20],k=1)[0]
+                disallowed_letters = ["k","q"]
             else:
                 audio_letter = "s"
-                correct_letters = random.choice([["c(e)","s"],["c(i)","s"]])
-        elif correct_letters[0] == "q":
-            audio_letter = "k"
-            correct_letters = ["q","c","k"]
-        elif correct_letters[0] == "k":
-            audio_letter = "k"
-            correct_letters = ["k","c","q"]
-        elif correct_letters[0] == "s":
-            audio_letter = "s"
-            correct_letters = ["s","c"]
+                correct_letter_rep = random.choice(["c(e)","c(i)"])[0]
+                disallowed_letters = ["s"]
         else:
-            audio_letter = correct_letters[0]
-
-        random_letters = random.choices(letters,k=3)
-        random_letters += correct_letters
-        if len(letters) >= 4:
-            while True:
-                random_letters = list(set(random_letters))
-                random_letters_length = len(random_letters)
-                if random_letters_length < 4:
-                    letters = list(set(letters).difference(random_letters))
-                    random_letters += random.choices(letters,k=4-random_letters_length)
-                else:
-                    break
-        random_letters = list(random_letters)
+            correct_letter_rep = correct_letter
         
+        if correct_letter == "q":
+            audio_letter = "k"
+            disallowed_letters = ["c","k"]
+        elif correct_letter == "k":
+            audio_letter = "k"
+            disallowed_letters = ["c","q"]
+        elif correct_letter == "s":
+            audio_letter = "s"
+            disallowed_letters = ["c"]
+        elif correct_letter == "n":
+            audio_letter = "n"
+            disallowed_letters = ["m"]
+        elif correct_letter == "m":
+            audio_letter = "m"
+            disallowed_letters = ["n"]
+        else:
+            audio_letter = correct_letter
+        letters = list(set(letters).difference(disallowed_letters).difference(correct_letter))
+        random_letters = [correct_letter_rep]
+        for i in range(3):
+            random_selection = random.choice(letters)
+            random_letters.append(random_selection)
+            letters.remove(random_selection)
+        random.shuffle(random_letters)
         filename = f'{audio_letter}.wav'
-        return random_letters, correct_letters, filename
+        import pyautogui
+        pyautogui.alert(correct_letter)
+        
+        pyautogui.alert(correct_letter_rep)
+        return random_letters, correct_letter, filename, correct_letter_rep
     
 
 # Main game loop
 def main():
     df_letters = pd.read_csv(r"C:\Users\austin.tracy\LearningHub\games\multiple_choice\history.csv")
     # Define choices
-    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 
-    'w', 'x', 'y', 'z']
-    random_letters, correct_letters, filename = set_up_a_round(df_letters)
+    random_letters, correct_letter, filename, correct_letter_rep = set_up_a_round(df_letters)
     sound_played = False
     score = 0
     remaining_attempts = 3
@@ -120,39 +128,40 @@ def main():
                 if event.button == 1:  # Left mouse button
                     for choice in choices:
                         if choice["rect"].collidepoint(event.pos):
-                            df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Other Question Padding"] = 3
+                            df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Other Question Padding"] = 3
                             df_letters["Other Question Padding"] -=1
-                            if choice["text"] in correct_letters:
+                            chosen_sequence = sub(r"\(.*\)","",choice["text"])
+                            if chosen_sequence == correct_letter:
                                 # Update the streak for this letter
-                                if df_letters.loc[df_letters["Correct Answer"] == correct_letters[0]]["Streak"].iloc[0] <= 0:
-                                    df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Streak"] = 1
+                                if df_letters.loc[df_letters["Correct Answer"] == correct_letter]["Streak"].iloc[0] <= 0:
+                                    df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Streak"] = 1
                                 else:
-                                    df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Streak"] += 1 
+                                    df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Streak"] += 1 
                                 # Add the date for this being correct
-                                df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Last Correct Answer Date"] = str(datetime.now())
+                                df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Last Correct Answer Date"] = str(datetime.now())
                                 score += 1
                                 celebration_screen(score)   
                             else:
                                 # Update the streak for this letter
-                                if df_letters.loc[df_letters["Correct Answer"] == correct_letters[0]]["Streak"].iloc[0] >= 0:
-                                    df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Streak"] = -1
+                                if df_letters.loc[df_letters["Correct Answer"] == correct_letter]["Streak"].iloc[0] >= 0:
+                                    df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Streak"] = -1
                                 else:
-                                    df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Streak"] -= 1 
-                                show_incorrect_screen(3 - remaining_attempts,correct_letters,thumbs_down_image)
+                                    df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Streak"] -= 1 
+                                show_incorrect_screen(3 - remaining_attempts,correct_letter,thumbs_down_image)
                                 remaining_attempts -= 1
                                 if remaining_attempts < 0:
                                     show_game_over_screen(score)
                                     score = 0
                                     remaining_attempts = 3
                             # Update the priority and Overall Score
-                            df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Priority"] -= df_letters.loc[df_letters["Correct Answer"] == correct_letters[0]]["Streak"]
-                            df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Overall Score"] += df_letters.loc[df_letters["Correct Answer"] == correct_letters[0]]["Streak"]
-                            if df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Priority"].any() > 10:
-                                df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Priority"] = 10
-                            elif df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Priority"].any() < 0:
-                                df_letters.loc[df_letters["Correct Answer"] == correct_letters[0],"Priority"] = 0
+                            df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Priority"] -= df_letters.loc[df_letters["Correct Answer"] == correct_letter]["Streak"]
+                            df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Overall Score"] += df_letters.loc[df_letters["Correct Answer"] == correct_letter]["Streak"]
+                            if df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Priority"].iloc[0] > 10:
+                                df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Priority"] = 10
+                            elif df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Priority"].iloc[0] < 0:
+                                df_letters.loc[df_letters["Correct Answer"] == correct_letter,"Priority"] = 0
                             df_letters.to_csv(r"C:\Users\austin.tracy\LearningHub\games\multiple_choice\history.csv",index=False)
-                    random_letters, correct_letters, filename = set_up_a_round(df_letters)   
+                    random_letters, correct_letter, filename, correct_letter_rep = set_up_a_round(df_letters)   
 
                     sound_played = False
         # Clear the screen
