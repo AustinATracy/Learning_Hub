@@ -5,7 +5,9 @@
 import pathlib  
 pathlib.Path.unlink(f"processes\whatever.json") 
 
-
+###
+# Opening anaconda within a Python script
+###
 import subprocess
 
 # Activate the conda environment and list the environments
