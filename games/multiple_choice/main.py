@@ -168,6 +168,7 @@ def main():
         # Draw prompt box
         prompt_text = "Which letter?"
         prompt = prompt_font.render(prompt_text, True, BLACK)
+        # Make this collidble to here the audio again.
         prompt_rect = prompt.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         
         # Create a slightly larger rectangle for the background

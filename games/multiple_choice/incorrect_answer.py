@@ -16,8 +16,8 @@ def show_incorrect_screen(num_thumbs_down, correct_answer,thumbs_down_image):
     BLACK = (0, 0, 0)
 
     # Fonts
-    font_large = pygame.font.Font(None, 72)
-    font_small = pygame.font.Font(None, 48)
+    font_large = pygame.font.Font(None, 150)
+    font_small = pygame.font.Font(None, 128)
 
     # Render text
     text_incorrect = font_large.render("Incorrect", True, RED)
